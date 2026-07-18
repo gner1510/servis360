@@ -105,10 +105,39 @@
     .camera-box .camera-actions { justify-content:center; }
     .camera-help { color:var(--muted); font-size:12px; text-align:center; margin:8px 0 0; }
 
+    .mobile-nav { display:none; }
+
     @media (max-width: 760px) {
-      .app { display: block; }
+      body { padding-bottom: 78px; }
+      .app { display: block; min-height: 100vh; }
       .sidebar { display: none; }
-      .form-grid, .form-grid.three, .stats { grid-template-columns: 1fr; }
+      .main { padding: 18px 16px 96px; }
+      .topbar { align-items:flex-start; gap:12px; margin-bottom:22px; }
+      .topbar h1 { font-size: 25px; line-height:1.1; }
+      .topbar p { font-size:12px; }
+      .userbox { padding:10px 12px; border-radius:14px; font-size:13px; max-width:46%; }
+      .form-grid, .form-grid.three { grid-template-columns: 1fr; gap:0; }
+      .stats { grid-template-columns: repeat(3, 1fr); gap:10px; }
+      .stat-card { padding:16px 12px; min-height:112px; }
+      .stat-card span { font-size:11px; }
+      .stat-card strong { font-size:28px; }
+      .panel { padding:16px; border-radius:16px; }
+      .btn { width:100%; }
+      .camera-actions { display:grid; grid-template-columns:1fr; }
+      .mobile-nav {
+        position:fixed; left:0; right:0; bottom:0; z-index:5000;
+        display:flex; gap:4px; overflow-x:auto; padding:8px 8px calc(8px + env(safe-area-inset-bottom));
+        background:rgba(3,7,18,.97); border-top:1px solid var(--line);
+        backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      }
+      .mobile-nav button {
+        flex:1 0 66px; min-width:66px; border:0; background:transparent; color:var(--muted);
+        padding:8px 4px; border-radius:12px; font-size:10px; font-weight:700; cursor:pointer;
+        display:flex; flex-direction:column; align-items:center; gap:4px;
+      }
+      .mobile-nav button .ico { font-size:20px; line-height:1; }
+      .mobile-nav button.active { background:rgba(6,182,212,.14); color:var(--cyan); }
+      .table-wrap { margin-left:-4px; margin-right:-4px; }
     }
   </style>
 </head>
@@ -163,7 +192,7 @@
   <div id="mainApp" class="app hidden">
     <aside class="sidebar">
       <div>
-        <div class="brand"><div class="logo small">S360</div><div><b>Servis360</b><small>Pro v1.2.0</small></div></div>
+        <div class="brand"><div class="logo small">S360</div><div><b>Servis360</b><small>Pro v1.3.0</small></div></div>
         <nav class="nav">
           <button id="menu-dashboard" class="menu-admin active" onclick="showPage('dashboard')">🏠 <span>Ana Sayfa</span></button>
           <button id="menu-tek" onclick="showPage('tek')">➕ <span>Tek Ekle</span></button>
@@ -283,6 +312,16 @@
       </section>
     </section>
   </div>
+
+  <!-- MOBİL ALT MENÜ -->
+  <nav id="mobileNav" class="mobile-nav" aria-label="Mobil menü">
+    <button id="mobile-dashboard" class="menu-admin active" onclick="showPage('dashboard')"><span class="ico">🏠</span><span>Ana Sayfa</span></button>
+    <button id="mobile-tek" onclick="showPage('tek')"><span class="ico">➕</span><span>Tek</span></button>
+    <button id="mobile-expense" onclick="showPage('expense')"><span class="ico">📷</span><span>Fiş / Gider</span></button>
+    <button id="mobile-records" onclick="showPage('records')"><span class="ico">📋</span><span>Kayıtlar</span></button>
+    <button id="mobile-approvals" class="menu-admin" onclick="showPage('approvals')"><span class="ico">📥</span><span>Onaylar</span></button>
+    <button id="mobile-staff" class="menu-admin" onclick="showPage('staff')"><span class="ico">👨‍✈️</span><span>Personel</span></button>
+  </nav>
 
   <!-- SADECE KAMERA İLE FİŞ ÇEKİMİ -->
   <div id="cameraModal" class="camera-modal" aria-hidden="true">
@@ -423,12 +462,32 @@
 
     function showPage(pageId) {
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
-      
-      document.getElementById(pageId).classList.add('active');
-      const btn = document.getElementById('menu-' + pageId);
-      if(btn) btn.classList.add('active');
-      document.getElementById('pageTitle').textContent = pageId.toUpperCase();
+      document.querySelectorAll('.nav button, .mobile-nav button').forEach(b => b.classList.remove('active'));
+
+      const page = document.getElementById(pageId);
+      if (!page) return;
+      page.classList.add('active');
+
+      const desktopBtn = document.getElementById('menu-' + pageId);
+      const mobileBtn = document.getElementById('mobile-' + pageId);
+      if(desktopBtn) desktopBtn.classList.add('active');
+      if(mobileBtn) {
+        mobileBtn.classList.add('active');
+        mobileBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+
+      const titles = {
+        dashboard: ['Ana Sayfa', 'Operasyon merkezi'],
+        tek: ['Tek Ekle', 'Yeni vardiya kaydı'],
+        expense: ['Gider Ekle', 'Fiş çek ve gider oluştur'],
+        records: ['Kayıtlarım', 'Onaylanan işlemler'],
+        approvals: ['Onay Havuzu', 'Bekleyen işlemler'],
+        staff: ['Personeller', 'Şoför hesapları']
+      };
+      const title = titles[pageId] || [pageId, ''];
+      document.getElementById('pageTitle').textContent = title[0];
+      document.getElementById('pageSub').textContent = title[1];
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     // PERSONEL EKLEME (Yalnızca Yönetici)
